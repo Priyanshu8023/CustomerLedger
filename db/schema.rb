@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_073958) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_113017) do
   create_table "customers", force: :cascade do |t|
     t.text "address"
     t.datetime "created_at", null: false
@@ -22,6 +22,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_073958) do
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
+  create_table "orders", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "customer_id", null: false
+    t.text "notes"
+    t.date "order_date"
+    t.string "order_number"
+    t.string "status"
+    t.decimal "total_amount"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["customer_id"], name: "index_orders_on_customer_id"
+    t.index ["user_id"], name: "index_orders_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
@@ -31,4 +45,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_073958) do
   end
 
   add_foreign_key "customers", "users"
+  add_foreign_key "orders", "customers"
+  add_foreign_key "orders", "users"
 end

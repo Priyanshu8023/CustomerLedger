@@ -11,10 +11,17 @@ Rails.application.routes.draw do
   post "/signup",  to:  "users#create"
   post "/login",   to:  "authentication#login"
   
-  post "/customer", to: "customers#create"
-  get "/customer", to: "customers#index"
-  get "/customer/:id", to: "customers#show"
-  patch "/customer/:id", to: "customers#update"
-  put "/customer/:id", to: "customers#update"
-  delete "/customer/:id", to: "customers#destroy"
+  resources :customers, path: "customer", controller: "customers", only: %i[index show create update destroy]
+
+  resources :orders do 
+    collection do 
+      get :summary
+    end
+  end
+
+  resources :customers do
+    member do
+      get :summary
+    end
+  end
 end

@@ -1,18 +1,20 @@
 class AuthenticationController < ApplicationController
   def login
-    user =User.find_by(email: params[:email])
+    logger.info("[LOG]: Authentication#login starting request_id=#{request.request_id}")
+    user = User.find_by(email: params[:email])
 
     if user&.authenticate(params[:password])
       token = JsonWebToken.encode(user_id: user.id)
 
-      logger.debug "[LOG]: #{user} logined Succesfully.Token: #{token}"
+      logger.info("[LOG]: Authentication#login success user_id=#{user.id} request_id=#{request.request_id}")
       render json: {
+        user_id: user.id,
+        user_name: user.name,
         token: token,
-        user: user
-      },status: :ok
+      }, status: :ok
     else
-      logger.warn "[LOG]: #{user} UNSUCCESFULLY."
-      render json:{
+      logger.warn("[LOG]: Authentication#login failed email=#{params[:email]} request_id=#{request.request_id}")
+      render json: {
         error: "Unsuccefull login"
       }, status: :unauthorized
     end
