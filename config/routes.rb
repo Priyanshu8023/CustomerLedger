@@ -10,6 +10,8 @@ Rails.application.routes.draw do
 
   post "/signup",  to:  "users#create"
   post "/login",   to:  "authentication#login"
+  post "/logout",  to:  "authentication#logout"
+  get "/dashboard", to: "dashboard#show"
   
   resources :customers, path: "customer", controller: "customers", only: %i[index show create update destroy]
 

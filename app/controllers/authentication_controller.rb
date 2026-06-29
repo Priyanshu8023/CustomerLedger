@@ -1,4 +1,6 @@
 class AuthenticationController < ApplicationController
+  before_action :authorize_request, only: :logout
+
   def login
     logger.info("[LOG]: Authentication#login starting request_id=#{request.request_id}")
     user = User.find_by(email: params[:email])
@@ -18,5 +20,12 @@ class AuthenticationController < ApplicationController
         error: "Unsuccefull login"
       }, status: :unauthorized
     end
+  end
+
+  def logout
+    logger.info("[LOG]: Authentication#logout success user_id=#{current_user.id} request_id=#{request.request_id}")
+    render json: {
+      message: "Logged out successfully"
+    }, status: :ok
   end
 end

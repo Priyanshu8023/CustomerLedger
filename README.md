@@ -137,14 +137,9 @@ Authenticates an existing user and returns a JWT token.
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "user": {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "created_at": "2026-06-25T07:39:58.000Z",
-    "updated_at": "2026-06-25T07:39:58.000Z"
-  }
+  "user_id": 1,
+  "user_name": "John Doe",
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
 }
 ```
 
@@ -153,6 +148,81 @@ Authenticates an existing user and returns a JWT token.
 ```json
 {
   "error": "Unsuccefull login"
+}
+```
+
+---
+
+#### `POST /logout` — User Logout
+
+Validates the current JWT token and returns a logout success response. Because authentication uses stateless JWTs, the client should remove the stored token after this response.
+
+**Headers**
+```
+Authorization: Bearer <token>
+```
+
+**Success Response — `200 OK`**
+
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+**Error Response — `401 Unauthorized`**
+
+```json
+{
+  "error": "Missing token"
+}
+```
+
+---
+
+### 📊 Dashboard
+
+> **The dashboard endpoint requires authentication.**  
+> Metrics are calculated only from the authenticated user's customers and orders.
+
+#### `GET /dashboard` — Get Dashboard Metrics
+
+Returns customer/order counts, revenue totals, today's order count, and the five most recent orders.
+
+**Headers**
+```
+Authorization: Bearer <token>
+```
+
+**Success Response — `200 OK`**
+
+```json
+{
+  "total_customers": 3,
+  "total_orders": 8,
+  "completed_orders": 5,
+  "pending_orders": 3,
+  "total_revenue": "2500.75",
+  "today_orders": 2,
+  "recent_orders": [
+    {
+      "id": 12,
+      "order_number": "ORD-0012",
+      "customer_id": 4,
+      "customer_name": "Acme Corp",
+      "total_amount": "500.25",
+      "status": "Completed",
+      "order_date": "2026-06-29"
+    }
+  ]
+}
+```
+
+**Error Response — `401 Unauthorized`**
+
+```json
+{
+  "error": "Missing token"
 }
 ```
 
@@ -370,9 +440,13 @@ Authorization: Bearer <token>
 DELETE /customer/1
 ```
 
-**Success Response — `204 No Content`**
+**Success Response — `200 OK`**
 
-*(Empty body)*
+```json
+{
+  "message": "Customer Deleted Successfull"
+}
+```
 
 ---
 
@@ -432,12 +506,15 @@ Returned when a requested customer does not exist or does not belong to the curr
 app/
 ├── controllers/
 │   ├── application_controller.rb   # JWT auth logic (authorize_request)
-│   ├── authentication_controller.rb # POST /login
+│   ├── authentication_controller.rb # POST /login, POST /logout
 │   ├── customers_controller.rb      # Customer CRUD
+│   ├── dashboard_controller.rb      # GET /dashboard
+│   ├── orders_controller.rb         # Order endpoints and summary
 │   └── users_controller.rb          # POST /signup
 ├── models/
 │   ├── customer.rb                  # belongs_to :user
-│   └── user.rb                      # has_many :customers
+│   ├── order.rb                     # belongs_to :user and :customer
+│   └── user.rb                      # has_many :customers, has_many :orders
 config/
 └── routes.rb                        # All API route definitions
 db/
@@ -452,6 +529,8 @@ db/
 |--------|----------|------|-------------|
 | `POST` | `/signup` | ❌ | Register a new user |
 | `POST` | `/login` | ❌ | Login and get JWT token |
+| `POST` | `/logout` | ✅ | Logout the authenticated user |
+| `GET` | `/dashboard` | ✅ | Get dashboard metrics and recent orders |
 | `POST` | `/customer` | ✅ | Create a new customer |
 | `GET` | `/customer` | ✅ | List all your customers |
 | `GET` | `/customer/:id` | ✅ | Get a specific customer |

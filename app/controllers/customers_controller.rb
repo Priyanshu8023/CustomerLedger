@@ -44,9 +44,7 @@ class CustomersController < ApplicationController
     logger.info("[LOG]: Customers#destroy customer_id=#{@customer.id} user_id=#{current_user&.id} request_id=#{request.request_id}")
     @customer.destroy
 
-    render json: {
-      message: "Customer Deleted Successfull"
-    },status: :ok
+    head :no_content
   end
 
   def summary
