@@ -12,6 +12,7 @@ A RESTful JSON API built with **Ruby on Rails 8** for managing a customer ledger
 | Database | SQLite3 |
 | Web Server | Puma |
 | Authentication | JWT (`jwt` gem) + `bcrypt` |
+| API Styles | REST + GraphQL (`graphql` gem) |
 
 ---
 
@@ -446,6 +447,206 @@ DELETE /customer/1
 
 ---
 
+## 🔎 GraphQL API
+
+The GraphQL endpoint is available at:
+
+```text
+POST /graphql
+```
+
+GraphQL requests require the same JWT authentication as the protected REST endpoints.
+
+**Headers**
+
+```text
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+The GraphQL controller passes the authenticated user into the GraphQL context, so `customers`, `orders`, and mutations operate only on the current user's records.
+
+### Available Queries
+
+#### List Customers
+
+```graphql
+query {
+  customers {
+    id
+    name
+    email
+    phone
+    address
+    orders {
+      id
+      orderNumber
+      status
+      totalAmount
+      orderDate
+    }
+  }
+}
+```
+
+#### List Orders
+
+```graphql
+query {
+  orders {
+    id
+    orderNumber
+    status
+    totalAmount
+    orderDate
+    notes
+    customer {
+      id
+      name
+      email
+    }
+  }
+}
+```
+
+### Available Mutations
+
+#### Create Customer
+
+```graphql
+mutation {
+  createCustomer(
+    input: {
+      name: "Acme Corp"
+      email: "contact@acme.com"
+      phone: "9876543210"
+      address: "123 Business Park, Mumbai"
+    }
+  ) {
+    customer {
+      id
+      name
+      email
+      phone
+      address
+    }
+    errors
+  }
+}
+```
+
+**Example HTTP Request**
+
+```bash
+curl -X POST http://localhost:3000/graphql \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation { createCustomer(input: { name: \"Acme Corp\", email: \"contact@acme.com\", phone: \"9876543210\", address: \"123 Business Park, Mumbai\" }) { customer { id name email phone address } errors } }"
+  }'
+```
+
+**Success Response**
+
+```json
+{
+  "data": {
+    "createCustomer": {
+      "customer": {
+        "id": "1",
+        "name": "Acme Corp",
+        "email": "contact@acme.com",
+        "phone": "9876543210",
+        "address": "123 Business Park, Mumbai"
+      },
+      "errors": []
+    }
+  }
+}
+```
+
+**Validation Error Response**
+
+```json
+{
+  "data": {
+    "createCustomer": {
+      "customer": null,
+      "errors": ["Name can't be blank"]
+    }
+  }
+}
+```
+
+#### Update Customer
+
+```graphql
+mutation {
+  updateCustomer(
+    input: {
+      id: "1"
+      name: "Acme Corporation"
+      phone: "1234567890"
+      address: "456 New Street, Delhi"
+    }
+  ) {
+    customer {
+      id
+      name
+      email
+      phone
+      address
+    }
+    errors
+  }
+}
+```
+
+#### Delete Customer
+
+```graphql
+mutation {
+  deleteCustomer(input: { id: "1" }) {
+    success
+    errors
+  }
+}
+```
+
+Deleting a customer also deletes that customer's orders because the Rails model uses `dependent: :destroy`.
+
+#### Create Order
+
+```graphql
+mutation {
+  createOrder(
+    input: {
+      customerId: "1"
+      totalAmount: 500.25
+      status: "Pending"
+      orderDate: "2026-06-30"
+      notes: "First order"
+    }
+  ) {
+    order {
+      id
+      orderNumber
+      status
+      totalAmount
+      orderDate
+      notes
+      customer {
+        id
+        name
+      }
+    }
+    errors
+  }
+}
+```
+
+---
+
 ## ⚠️ Error Responses
 
 ### `401 Unauthorized`
@@ -505,8 +706,21 @@ app/
 │   ├── authentication_controller.rb # POST /login, POST /logout
 │   ├── customers_controller.rb      # Customer CRUD
 │   ├── dashboard_controller.rb      # GET /dashboard
+│   ├── graphql_controller.rb        # POST /graphql
 │   ├── orders_controller.rb         # Order endpoints and summary
 │   └── users_controller.rb          # POST /signup
+├── graphql/
+│   ├── customer_ledger_schema.rb    # GraphQL schema
+│   ├── mutations/
+│   │   ├── create_customer.rb       # createCustomer mutation
+│   │   ├── create_order.rb          # createOrder mutation
+│   │   ├── delete_customer.rb       # deleteCustomer mutation
+│   │   └── update_customer.rb       # updateCustomer mutation
+│   └── types/
+│       ├── customer_type.rb         # Customer GraphQL type
+│       ├── mutation_type.rb         # Root GraphQL mutations
+│       ├── order_type.rb            # Order GraphQL type
+│       └── query_type.rb            # Root GraphQL queries
 ├── models/
 │   ├── customer.rb                  # belongs_to :user
 │   ├── order.rb                     # belongs_to :user and :customer
@@ -526,6 +740,7 @@ db/
 | `POST` | `/signup` | ❌ | Register a new user |
 | `POST` | `/login` | ❌ | Login and get JWT token |
 | `POST` | `/logout` | ✅ | Logout the authenticated user |
+| `POST` | `/graphql` | ✅ | Run authenticated GraphQL queries and mutations |
 | `GET` | `/dashboard` | ✅ | Get dashboard metrics and recent orders |
 | `POST` | `/customer` | ✅ | Create a new customer |
 | `GET` | `/customer` | ✅ | List all your customers |
