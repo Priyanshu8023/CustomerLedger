@@ -440,13 +440,9 @@ Authorization: Bearer <token>
 DELETE /customer/1
 ```
 
-**Success Response — `200 OK`**
+**Success Response — `204 No Content`**
 
-```json
-{
-  "message": "Customer Deleted Successfull"
-}
-```
+*(Empty body)*
 
 ---
 
