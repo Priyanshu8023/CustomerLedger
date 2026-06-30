@@ -602,6 +602,49 @@ mutation {
 }
 ```
 
+**Example HTTP Request**
+
+```bash
+curl -X POST http://localhost:3000/graphql \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation { updateCustomer(input: { id: \"1\", name: \"Acme Corporation\", phone: \"1234567890\", address: \"456 New Street, Delhi\" }) { customer { id name email phone address } errors } }"
+  }'
+```
+
+**Success Response**
+
+```json
+{
+  "data": {
+    "updateCustomer": {
+      "customer": {
+        "id": "1",
+        "name": "Acme Corporation",
+        "email": "contact@acme.com",
+        "phone": "1234567890",
+        "address": "456 New Street, Delhi"
+      },
+      "errors": []
+    }
+  }
+}
+```
+
+**Validation Error Response**
+
+```json
+{
+  "data": {
+    "updateCustomer": {
+      "customer": null,
+      "errors": ["Customer not found"]
+    }
+  }
+}
+```
+
 #### Delete Customer
 
 ```graphql
@@ -614,6 +657,43 @@ mutation {
 ```
 
 Deleting a customer also deletes that customer's orders because the Rails model uses `dependent: :destroy`.
+
+**Example HTTP Request**
+
+```bash
+curl -X POST http://localhost:3000/graphql \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation { deleteCustomer(input: { id: \"1\" }) { success errors } }"
+  }'
+```
+
+**Success Response**
+
+```json
+{
+  "data": {
+    "deleteCustomer": {
+      "success": true,
+      "errors": []
+    }
+  }
+}
+```
+
+**Error Response**
+
+```json
+{
+  "data": {
+    "deleteCustomer": {
+      "success": false,
+      "errors": ["Customer not found"]
+    }
+  }
+}
+```
 
 #### Create Order
 
@@ -641,6 +721,54 @@ mutation {
       }
     }
     errors
+  }
+}
+```
+
+**Example HTTP Request**
+
+```bash
+curl -X POST http://localhost:3000/graphql \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation { createOrder(input: { customerId: \"1\", totalAmount: 500.25, status: \"Pending\", orderDate: \"2026-06-30\", notes: \"First order\" }) { order { id orderNumber status totalAmount orderDate notes customer { id name } } errors } }"
+  }'
+```
+
+**Success Response**
+
+```json
+{
+  "data": {
+    "createOrder": {
+      "order": {
+        "id": "1",
+        "orderNumber": "ORD-0001",
+        "status": "Pending",
+        "totalAmount": 500.25,
+        "orderDate": "2026-06-30",
+        "notes": "First order",
+        "customer": {
+          "id": "1",
+          "name": "Acme Corp"
+        }
+      },
+      "errors": []
+    }
+  }
+}
+```
+
+**Validation Error Response**
+
+```json
+{
+  "data": {
+    "createOrder": {
+      "order": null,
+      "errors": ["Customer not found"]
+    }
   }
 }
 ```
