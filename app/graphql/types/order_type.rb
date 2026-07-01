@@ -1,6 +1,6 @@
 module Types
   class OrderType < Types::BaseObject
-    field :id, ID, null: false
+    implements Types::NodeType
     field :order_number, String
     field :status, String
     field :total_amount, Float
