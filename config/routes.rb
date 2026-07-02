@@ -8,11 +8,30 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
 
-  # Authentication (kept as REST — not moved to GraphQL)
+  # Authentication
   post "/signup",  to:  "users#create"
   post "/login",   to:  "authentication#login"
   post "/logout",  to:  "authentication#logout"
 
-  # GraphQL endpoint (handles all other operations)
+  # Dashboard
+  get "/dashboard", to: "dashboard#show"
+
+  # Customers CRUD + summary
+  resources :customers, path: "customer", controller: "customers", only: %i[index show create update destroy]
+
+  resources :customers do
+    member do
+      get :summary
+    end
+  end
+
+  # Orders + summary
+  resources :orders do
+    collection do
+      get :summary
+    end
+  end
+
+  # GraphQL endpoint
   post "/graphql", to: "graphql#execute"
 end
